@@ -47,10 +47,14 @@ permissions:
 
 jobs:
   run:
-    name: ${{ inputs.job_name }}
+    name: ${{ inputs.job_name }} (Py${{ matrix.python-version }})
     runs-on: ubuntu-latest
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ${{ fromJson(inputs.python_versions_json) }}
     defaults:
       run:
         shell: bash
@@ -63,7 +67,7 @@ jobs:
         if: ${{ inputs.use_pip_cache }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ fromJson(inputs.python_versions_json)[0] }}
+          python-version: ${{ matrix.python-version }}
           cache: pip
           cache-dependency-path: |
             **/pyproject.toml
@@ -74,7 +78,7 @@ jobs:
         if: ${{ !inputs.use_pip_cache }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ fromJson(inputs.python_versions_json)[0] }}
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: ${{ inputs.install_command }}
@@ -94,5 +98,5 @@ jobs:
         if: ${{ always() && inputs.artifact_name != '' && inputs.artifact_path != '' }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.artifact_name }}
+          name: ${{ inputs.artifact_name }}-py${{ matrix.python-version }}
           path: ${{ inputs.artifact_path }}
