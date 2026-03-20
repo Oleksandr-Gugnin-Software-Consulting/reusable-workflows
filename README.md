@@ -1,0 +1,36 @@
+# reusable-workflows
+
+Reusable GitHub Actions workflows derived from the CI/CD groundwork in Customer-Demos.
+
+## Included workflows
+
+- `reusable-detect-changes.yml`: categorizes changed files into `core`, `tests`, `docs`, `docker`, and `ci` buckets.
+- `reusable-python-job.yml`: runs an arbitrary Python install and job command, optionally across a version matrix.
+- `reusable-docker-build.yml`: builds a Docker image, runs a smoke container, verifies an HTTP endpoint, and reports image size.
+- `reusable-deploy-command.yml`: checks out a repository, prepares an SSH key when provided, and executes a deployment or maintenance command.
+
+## Typical usage
+
+```yaml
+jobs:
+  tests:
+    uses: Oleksandr-Gugnin-Software-Consulting/reusable-workflows/.github/workflows/reusable-python-job.yml@v1
+    with:
+      job_name: Test suite
+      python_versions_json: '["3.11", "3.12", "3.13"]'
+      install_command: |
+        python -m pip install --upgrade pip
+        python -m pip install -e ".[dev]"
+      run_command: python -m pytest -q
+```
+
+```yaml
+jobs:
+  deploy:
+    uses: Oleksandr-Gugnin-Software-Consulting/reusable-workflows/.github/workflows/reusable-deploy-command.yml@v1
+    with:
+      job_name: Deploy production
+      command: ./scripts/deploy.sh
+    secrets:
+      ssh_private_key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+```

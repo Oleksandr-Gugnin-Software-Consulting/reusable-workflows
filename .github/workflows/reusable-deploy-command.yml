@@ -1,0 +1,65 @@
+name: Reusable Deploy Command
+
+on:
+  workflow_call:
+    inputs:
+      job_name:
+        required: false
+        type: string
+        default: Deploy
+      working_directory:
+        required: false
+        type: string
+        default: .
+      python_version:
+        required: false
+        type: string
+        default: ''
+      command:
+        required: true
+        type: string
+    secrets:
+      ssh_private_key:
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: ${{ inputs.job_name }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ inputs.working_directory }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        if: ${{ inputs.python_version != '' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python_version }}
+          cache: pip
+
+      - name: Prepare SSH key
+        if: ${{ secrets.ssh_private_key != '' }}
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.ssh_private_key }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.ssh"
+          key_path="$HOME/.ssh/deploy_key"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$key_path"
+          chmod 600 "$key_path"
+          {
+            echo 'Host *'
+            echo '  StrictHostKeyChecking accept-new'
+          } > "$HOME/.ssh/config"
+          chmod 600 "$HOME/.ssh/config"
+          echo "DEPLOY_SSH_KEY=$key_path" >> "$GITHUB_ENV"
+
+      - name: Run command
+        run: ${{ inputs.command }}

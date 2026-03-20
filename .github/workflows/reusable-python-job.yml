@@ -1,0 +1,100 @@
+name: Reusable Python Job
+
+on:
+  workflow_call:
+    inputs:
+      job_name:
+        required: false
+        type: string
+        default: Python job
+      python_versions_json:
+        required: false
+        type: string
+        default: '["3.11"]'
+      working_directory:
+        required: false
+        type: string
+        default: .
+      install_command:
+        required: true
+        type: string
+      pre_run_command:
+        required: false
+        type: string
+        default: ''
+      run_command:
+        required: true
+        type: string
+      post_run_command:
+        required: false
+        type: string
+        default: ''
+      artifact_name:
+        required: false
+        type: string
+        default: ''
+      artifact_path:
+        required: false
+        type: string
+        default: ''
+      use_pip_cache:
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    name: ${{ inputs.job_name }} (Py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ${{ fromJson(inputs.python_versions_json) }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ inputs.working_directory }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python with pip cache
+        if: ${{ inputs.use_pip_cache }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            **/pyproject.toml
+            **/requirements*.txt
+            **/setup.py
+
+      - name: Set up Python without cache
+        if: ${{ !inputs.use_pip_cache }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: ${{ inputs.install_command }}
+
+      - name: Run setup command
+        if: ${{ inputs.pre_run_command != '' }}
+        run: ${{ inputs.pre_run_command }}
+
+      - name: Run job
+        run: ${{ inputs.run_command }}
+
+      - name: Run cleanup command
+        if: ${{ always() && inputs.post_run_command != '' }}
+        run: ${{ inputs.post_run_command }}
+
+      - name: Upload artifact
+        if: ${{ always() && inputs.artifact_name != '' && inputs.artifact_path != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}-py${{ matrix.python-version }}
+          path: ${{ inputs.artifact_path }}
