@@ -9,6 +9,8 @@ Reusable GitHub Actions workflows derived from the CI/CD groundwork in Customer-
 - `reusable-docker-build.yml`: builds a Docker image, runs a smoke container, verifies an HTTP endpoint, and reports image size.
 - `reusable-deploy-command.yml`: checks out a repository, prepares an SSH key when provided, and executes a deployment or maintenance command.
 
+`reusable-python-job.yml` can consume an inherited `OPENAI_API_KEY` secret and exposes it to the job environment for live LLM test runs.
+
 ## Typical usage
 
 ```yaml
@@ -22,6 +24,19 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install -e ".[dev]"
       run_command: python -m pytest -q
+```
+
+```yaml
+jobs:
+  llm-backend:
+    uses: Oleksandr-Gugnin-Software-Consulting/reusable-workflows/.github/workflows/reusable-python-job.yml@v1
+    with:
+      job_name: Live LLM backend tests
+      install_command: |
+        python -m pip install --upgrade pip
+        python -m pip install -e ".[dev]"
+      run_command: python -m pytest -q tests/llm_backend --run-llm-backend -n auto
+    secrets: inherit
 ```
 
 ```yaml

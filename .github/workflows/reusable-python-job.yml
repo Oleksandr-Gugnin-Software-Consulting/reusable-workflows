@@ -49,6 +49,8 @@ jobs:
   run:
     name: ${{ inputs.job_name }} (Py${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     strategy:
       fail-fast: false
       matrix:
