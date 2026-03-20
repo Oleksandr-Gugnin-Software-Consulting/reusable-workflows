@@ -45,7 +45,10 @@ jobs:
     uses: Oleksandr-Gugnin-Software-Consulting/reusable-workflows/.github/workflows/reusable-deploy-command.yml@v1
     with:
       job_name: Deploy production
+      runner_labels_json: '["self-hosted", "linux", "mixfm2-deploy"]'
       command: ./scripts/deploy.sh
     secrets:
       ssh_private_key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
 ```
+
+`reusable-deploy-command.yml` runs on `ubuntu-latest` by default. To target a self-hosted runner, pass `runner_labels_json` as a JSON array of runner labels.

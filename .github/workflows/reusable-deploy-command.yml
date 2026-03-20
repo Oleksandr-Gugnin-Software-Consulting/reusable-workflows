@@ -7,6 +7,10 @@ on:
         required: false
         type: string
         default: Deploy
+      runner_labels_json:
+        required: false
+        type: string
+        default: '["ubuntu-latest"]'
       working_directory:
         required: false
         type: string
@@ -28,7 +32,7 @@ permissions:
 jobs:
   deploy:
     name: ${{ inputs.job_name }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJson(inputs.runner_labels_json) }}
     defaults:
       run:
         shell: bash
